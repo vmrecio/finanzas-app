@@ -1,0 +1,17 @@
+// Baseline Prisma setup for finanzas-app.
+//
+// Intentionally NO domain models yet: this schema exists to prove the
+// migration toolchain (datasource connectivity + `prisma migrate`) works
+// end-to-end against Postgres. Domain entities (User, Account, Category,
+// Transaction, Budget, RefreshToken) are introduced incrementally, one per
+// capability phase, each shipping its own migration alongside that
+// capability's code (see design.md "Migration / Rollout").
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
