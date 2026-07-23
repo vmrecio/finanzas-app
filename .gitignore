@@ -1,0 +1,39 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build outputs
+dist/
+build/
+.next/
+out/
+
+# turborepo
+.turbo/
+
+# testing
+coverage/
+*.lcov
+
+# env
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# editor / OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# prisma
+apps/api/generated/
+
+# playwright
+apps/web/test-results/
+apps/web/playwright-report/
