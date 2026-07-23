@@ -11,6 +11,9 @@ out/
 # turborepo
 .turbo/
 
+# typescript incremental build info
+*.tsbuildinfo
+
 # testing
 coverage/
 *.lcov
