@@ -5,3 +5,4 @@ build
 .turbo
 coverage
 pnpm-lock.yaml
+apps/web/next-env.d.ts
