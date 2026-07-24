@@ -1,7 +1,17 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist"
+    "outDir": "./dist",
+    // Clears the inherited `@finanzas/shared` -> source `paths` mapping for
+    // the BUILD only. `tsc --noEmit` (typecheck) keeps that mapping for a
+    // fast, build-independent dev loop, but emitting through it would pull
+    // packages/shared/src into this compilation, forcing tsc to widen its
+    // inferred rootDir to the whole monorepo and produce a broken
+    // dist/apps/api/src/main.js layout instead of dist/main.js. Falling
+    // through to plain node_modules resolution (the real workspace
+    // package's own dist/index.js + dist/index.d.ts, built by the `^build`
+    // dependency in turbo.json) keeps emit flat and correct.
+    "paths": {}
   },
   "exclude": ["node_modules", "dist", "test", "**/*.spec.ts"]
 }
