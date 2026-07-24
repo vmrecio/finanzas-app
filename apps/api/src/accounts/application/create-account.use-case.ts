@@ -14,6 +14,7 @@ export interface AccountResult {
   name: string;
   type: AccountType;
   createdAt: Date;
+  balanceCents: number;
 }
 
 @Injectable()
@@ -29,6 +30,10 @@ export class CreateAccountUseCase {
     });
     const saved = await this.accountRepository.save(account);
 
-    return { id: saved.id, name: saved.name, type: saved.type, createdAt: saved.createdAt };
+    // A brand-new account cannot yet have any transactions (its id did not
+    // exist for a foreign key to reference), so the ledger-derived balance
+    // is trivially zero (see spec.md "Create account" scenario) without
+    // needing an AccountBalancePort round-trip.
+    return { id: saved.id, name: saved.name, type: saved.type, createdAt: saved.createdAt, balanceCents: 0 };
   }
 }

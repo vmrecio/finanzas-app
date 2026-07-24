@@ -30,5 +30,9 @@ import { PrismaTransactionReferenceAdapter } from './infrastructure/persistence/
     { provide: CATEGORY_REPOSITORY, useClass: PrismaCategoryRepository },
     { provide: TRANSACTION_REFERENCE, useClass: PrismaTransactionReferenceAdapter },
   ],
+  // Exported so TransactionsModule can inject CATEGORY_REPOSITORY for its
+  // own cross-owner reference checks (see design.md "Ownership scoping" —
+  // Phase 5 depends on Accounts+Categories).
+  exports: [CATEGORY_REPOSITORY],
 })
 export class CategoriesModule {}

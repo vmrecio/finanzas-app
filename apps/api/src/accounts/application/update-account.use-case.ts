@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Account, type AccountType } from '../domain/account.entity';
 import { AccountNotFoundError } from '../domain/errors';
+import { ACCOUNT_BALANCE, type AccountBalancePort } from './ports/account-balance.port';
 import { ACCOUNT_REPOSITORY, type AccountRepositoryPort } from './ports/account-repository.port';
 import type { AccountResult } from './create-account.use-case';
 
@@ -13,7 +14,10 @@ export interface UpdateAccountInput {
 
 @Injectable()
 export class UpdateAccountUseCase {
-  constructor(@Inject(ACCOUNT_REPOSITORY) private readonly accountRepository: AccountRepositoryPort) {}
+  constructor(
+    @Inject(ACCOUNT_REPOSITORY) private readonly accountRepository: AccountRepositoryPort,
+    @Inject(ACCOUNT_BALANCE) private readonly accountBalance: AccountBalancePort,
+  ) {}
 
   async execute(input: UpdateAccountInput): Promise<AccountResult> {
     const existing = await this.accountRepository.findByIdForOwner(input.id, input.ownerId);
@@ -30,7 +34,8 @@ export class UpdateAccountUseCase {
       createdAt: existing.createdAt,
     });
     const saved = await this.accountRepository.save(updated);
+    const balanceCents = await this.accountBalance.getBalanceForOwner(saved.id, input.ownerId);
 
-    return { id: saved.id, name: saved.name, type: saved.type, createdAt: saved.createdAt };
+    return { id: saved.id, name: saved.name, type: saved.type, createdAt: saved.createdAt, balanceCents };
   }
 }

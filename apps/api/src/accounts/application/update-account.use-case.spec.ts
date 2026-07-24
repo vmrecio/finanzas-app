@@ -1,13 +1,19 @@
 import { Account } from '../domain/account.entity';
 import { AccountNotFoundError } from '../domain/errors';
+import { FakeAccountBalance } from './test-fakes/fake-account-balance';
 import { InMemoryAccountRepository } from './test-fakes/in-memory-account.repository';
 import { UpdateAccountUseCase } from './update-account.use-case';
 
 describe('UpdateAccountUseCase', () => {
-  function setup(): { useCase: UpdateAccountUseCase; repository: InMemoryAccountRepository } {
+  function setup(): {
+    useCase: UpdateAccountUseCase;
+    repository: InMemoryAccountRepository;
+    accountBalance: FakeAccountBalance;
+  } {
     const repository = new InMemoryAccountRepository();
-    const useCase = new UpdateAccountUseCase(repository);
-    return { useCase, repository };
+    const accountBalance = new FakeAccountBalance();
+    const useCase = new UpdateAccountUseCase(repository, accountBalance);
+    return { useCase, repository, accountBalance };
   }
 
   it('updates the name of an account owned by the requesting user', async () => {
@@ -34,6 +40,18 @@ describe('UpdateAccountUseCase', () => {
 
     expect(result.type).toBe('credit_card');
     expect(result.name).toBe('Wallet');
+  });
+
+  it('reports the current ledger-derived balance, unaffected by a name/type update', async () => {
+    const { useCase, repository, accountBalance } = setup();
+    await repository.save(
+      Account.create({ id: 'a1', userId: 'user-1', name: 'Old Name', type: 'bank' }),
+    );
+    accountBalance.setBalance('a1', 2500);
+
+    const result = await useCase.execute({ id: 'a1', ownerId: 'user-1', name: 'New Name' });
+
+    expect(result.balanceCents).toBe(2500);
   });
 
   it('throws AccountNotFoundError when the account does not exist', async () => {

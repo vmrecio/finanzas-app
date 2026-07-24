@@ -17,6 +17,7 @@ describe('CreateAccountUseCase', () => {
     expect(result.type).toBe('bank');
     expect(typeof result.id).toBe('string');
     expect(result.id.length).toBeGreaterThan(0);
+    expect(result.balanceCents).toBe(0);
 
     const stored = await repository.findByIdForOwner(result.id, 'user-1');
     expect(stored?.name).toBe('Main Checking');
