@@ -8,11 +8,28 @@ on:
 env:
   TURBO_TELEMETRY_DISABLED: '1'
   NEXT_TELEMETRY_DISABLED: '1'
+  # Matches docker-compose.yml's local dev credentials — non-secret CI-only values.
+  DATABASE_URL: 'postgresql://finanzas:finanzas@localhost:5432/finanzas?schema=public'
+  JWT_SECRET: 'ci-test-secret'
 
 jobs:
   ci:
     name: Lint, typecheck, test, build
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: finanzas
+          POSTGRES_PASSWORD: finanzas
+          POSTGRES_DB: finanzas
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U finanzas -d finanzas"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,12 +46,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Apply database migrations
+        run: pnpm --filter @finanzas/api exec prisma migrate deploy
+
       - name: Lint
         run: pnpm turbo run lint
 
       - name: Typecheck
         run: pnpm turbo run typecheck
 
+      # Integration tests (apps/api) run against the Postgres service above
+      # and are forced serial (jest --runInBand) to avoid races on shared
+      # tables — see auth.http.integration.spec.ts for the rationale.
       - name: Test
         run: pnpm turbo run test
 
