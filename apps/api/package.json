@@ -12,9 +12,12 @@
     "test": "jest --runInBand",
     "prisma:generate": "prisma generate",
     "migrate:dev": "prisma migrate dev",
-    "migrate:deploy": "prisma migrate deploy"
+    "migrate:deploy": "prisma migrate deploy",
+    "prestart": "pnpm --filter @finanzas/shared build",
+    "prestart:dev": "pnpm --filter @finanzas/shared build"
   },
   "dependencies": {
+    "@finanzas/shared": "workspace:*",
     "@nestjs/common": "^11.1.6",
     "@nestjs/core": "^11.1.6",
     "@nestjs/jwt": "^11.0.2",
@@ -58,6 +61,9 @@
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^@finanzas/shared$": "<rootDir>/../../../packages/shared/src/index.ts"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
