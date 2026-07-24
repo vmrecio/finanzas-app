@@ -4,7 +4,7 @@
 // each shipping its own migration alongside that capability's code (see
 // design.md "Migration / Rollout"). Phase 1 shipped the baseline
 // datasource/generator only; Phase 2 (Auth) added User + RefreshToken;
-// Phase 3 (Accounts) adds Account.
+// Phase 3 (Accounts) added Account; Phase 4 (Categories) adds Category.
 //
 // Prisma models are infrastructure-only: the domain/application layers never
 // import `@prisma/client` directly (see design.md "Migrations / ORM").
@@ -25,6 +25,7 @@ model User {
   createdAt     DateTime       @default(now()) @map("created_at")
   refreshTokens RefreshToken[]
   accounts      Account[]
+  categories    Category[]
 
   @@map("users")
 }
@@ -47,6 +48,29 @@ model Account {
   // (see design.md "Database Schema" indexing strategy).
   @@index([userId])
   @@map("accounts")
+}
+
+enum CategoryKind {
+  income
+  expense
+}
+
+model Category {
+  id        String       @id
+  userId    String       @map("user_id")
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  kind      CategoryKind
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  // Leading on userId so owner-scoped listing/lookups are index-satisfied
+  // (see design.md "Database Schema" indexing strategy). Unique per
+  // (userId, name, kind) enforces "Requirement: Category Creation"
+  // (duplicate name+kind rejected) at the DB level as defense-in-depth,
+  // mirroring the application-layer check in CreateCategoryUseCase.
+  @@unique([userId, name, kind])
+  @@index([userId])
+  @@map("categories")
 }
 
 model RefreshToken {
