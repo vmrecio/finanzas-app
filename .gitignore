@@ -28,6 +28,9 @@ coverage/
 npm-debug.log*
 pnpm-debug.log*
 
+# claude code
+.atl/
+
 # editor / OS
 .DS_Store
 .vscode/*
