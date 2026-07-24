@@ -38,7 +38,7 @@ describe('ListTransactionsUseCase', () => {
     const results = await useCase.execute({ ownerId: 'user-1' });
 
     expect(results).toHaveLength(1);
-    expect(results[0].id).toBe('tx-a');
+    expect(results[0]?.id).toBe('tx-a');
   });
 
   it('returns an empty list, not an error, when no transactions match', async () => {
@@ -94,6 +94,6 @@ describe('ListTransactionsUseCase', () => {
     });
 
     expect(results).toHaveLength(1);
-    expect(results[0].id).toBe('tx-feb-matching');
+    expect(results[0]?.id).toBe('tx-feb-matching');
   });
 });
