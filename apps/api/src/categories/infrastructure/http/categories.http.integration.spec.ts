@@ -40,8 +40,11 @@ describe('Categories HTTP (integration)', () => {
   });
 
   // Full-table cleanup is safe here only because integration specs run
-  // serially (`jest --runInBand`, see apps/api/package.json).
+  // serially (`jest --runInBand`, see apps/api/package.json). Transactions
+  // must be cleared before accounts/categories/users due to FK constraints.
   afterEach(async () => {
+    await prisma.transaction.deleteMany();
+    await prisma.account.deleteMany();
     await prisma.category.deleteMany();
     await prisma.refreshToken.deleteMany();
     await prisma.user.deleteMany();
@@ -220,6 +223,37 @@ describe('Categories HTTP (integration)', () => {
         .get(`/categories/${categoryId}`)
         .set('Authorization', `Bearer ${owner.accessToken}`);
       expect(getResponse.status).toBe(404);
+    });
+
+    it('blocks deletion and preserves the category when it is referenced by a transaction', async () => {
+      const owner = await registerAndLogin(app, 'delete-blocked-owner@example.com');
+      const createResponse = await request(app.getHttpServer())
+        .post('/categories')
+        .set('Authorization', `Bearer ${owner.accessToken}`)
+        .send({ name: 'In Use', kind: 'expense' });
+      const categoryId = createResponse.body.id as string;
+      const ownerId = (await prisma.user.findUnique({ where: { email: 'delete-blocked-owner@example.com' } }))!
+        .id;
+      const accountId = 'delete-blocked-account';
+      await prisma.account.create({ data: { id: accountId, userId: ownerId, name: 'Checking', type: 'bank' } });
+      await prisma.transaction.create({
+        data: {
+          id: 'delete-blocked-transaction',
+          userId: ownerId,
+          accountId,
+          categoryId,
+          type: 'expense',
+          amountCents: 500n,
+          occurredOn: new Date('2026-07-01T00:00:00.000Z'),
+        },
+      });
+
+      const deleteResponse = await request(app.getHttpServer())
+        .delete(`/categories/${categoryId}`)
+        .set('Authorization', `Bearer ${owner.accessToken}`);
+
+      expect(deleteResponse.status).toBe(409);
+      expect(await prisma.category.findUnique({ where: { id: categoryId } })).not.toBeNull();
     });
   });
 });

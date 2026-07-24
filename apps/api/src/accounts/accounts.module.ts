@@ -9,8 +9,8 @@ import { GetAccountUseCase } from './application/get-account.use-case';
 import { ListAccountsUseCase } from './application/list-accounts.use-case';
 import { UpdateAccountUseCase } from './application/update-account.use-case';
 import { AccountsController } from './infrastructure/http/accounts.controller';
-import { NoTransactionsYetAdapter } from './infrastructure/persistence/no-transactions-yet.adapter';
 import { PrismaAccountRepository } from './infrastructure/persistence/prisma-account.repository';
+import { PrismaTransactionExistenceAdapter } from './infrastructure/persistence/prisma-transaction-existence.adapter';
 
 @Module({
   // AuthModule provides JwtAuthGuard (used on AccountsController) and, by
@@ -28,7 +28,7 @@ import { PrismaAccountRepository } from './infrastructure/persistence/prisma-acc
     UpdateAccountUseCase,
     DeleteAccountUseCase,
     { provide: ACCOUNT_REPOSITORY, useClass: PrismaAccountRepository },
-    { provide: TRANSACTION_EXISTENCE, useClass: NoTransactionsYetAdapter },
+    { provide: TRANSACTION_EXISTENCE, useClass: PrismaTransactionExistenceAdapter },
   ],
 })
 export class AccountsModule {}
