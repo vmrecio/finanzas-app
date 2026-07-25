@@ -1,5 +1,10 @@
 import { Category } from '../domain/category.entity';
-import { CategoryHasTransactionsError, CategoryNotFoundError } from '../domain/errors';
+import {
+  CategoryHasBudgetsError,
+  CategoryHasTransactionsError,
+  CategoryNotFoundError,
+} from '../domain/errors';
+import { FakeBudgetReference } from './test-fakes/fake-budget-reference';
 import { FakeTransactionReference } from './test-fakes/fake-transaction-reference';
 import { InMemoryCategoryRepository } from './test-fakes/in-memory-category.repository';
 import { DeleteCategoryUseCase } from './delete-category.use-case';
@@ -9,14 +14,16 @@ describe('DeleteCategoryUseCase', () => {
     useCase: DeleteCategoryUseCase;
     repository: InMemoryCategoryRepository;
     transactionReference: FakeTransactionReference;
+    budgetReference: FakeBudgetReference;
   } {
     const repository = new InMemoryCategoryRepository();
     const transactionReference = new FakeTransactionReference();
-    const useCase = new DeleteCategoryUseCase(repository, transactionReference);
-    return { useCase, repository, transactionReference };
+    const budgetReference = new FakeBudgetReference();
+    const useCase = new DeleteCategoryUseCase(repository, transactionReference, budgetReference);
+    return { useCase, repository, transactionReference, budgetReference };
   }
 
-  it('deletes a category owned by the requesting user when it has zero transactions', async () => {
+  it('deletes a category owned by the requesting user when it has zero transactions and zero budgets', async () => {
     const { useCase, repository } = setup();
     await repository.save(
       Category.create({ id: 'c1', userId: 'user-1', name: 'Groceries', kind: 'expense' }),
@@ -36,6 +43,19 @@ describe('DeleteCategoryUseCase', () => {
 
     await expect(useCase.execute({ id: 'c1', ownerId: 'user-1' })).rejects.toThrow(
       CategoryHasTransactionsError,
+    );
+    expect(await repository.findByIdForOwner('c1', 'user-1')).not.toBeNull();
+  });
+
+  it('rejects deletion and preserves the category when referenced by a budget but zero transactions', async () => {
+    const { useCase, repository, budgetReference } = setup();
+    await repository.save(
+      Category.create({ id: 'c1', userId: 'user-1', name: 'Groceries', kind: 'expense' }),
+    );
+    budgetReference.markAsReferenced('c1');
+
+    await expect(useCase.execute({ id: 'c1', ownerId: 'user-1' })).rejects.toThrow(
+      CategoryHasBudgetsError,
     );
     expect(await repository.findByIdForOwner('c1', 'user-1')).not.toBeNull();
   });
