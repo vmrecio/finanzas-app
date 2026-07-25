@@ -2,12 +2,20 @@ import { Module } from '@nestjs/common';
 import { AccountsModule } from './accounts/accounts.module';
 import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
+import { BudgetsModule } from './budgets/budgets.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ReportingModule } from './reporting/reporting.module';
 import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
-  imports: [AuthModule, AccountsModule, CategoriesModule, TransactionsModule, ReportingModule],
+  imports: [
+    AuthModule,
+    AccountsModule,
+    CategoriesModule,
+    TransactionsModule,
+    ReportingModule,
+    BudgetsModule,
+  ],
   controllers: [AppController],
 })
 export class AppModule {}
