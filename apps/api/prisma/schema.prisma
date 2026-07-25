@@ -29,6 +29,7 @@ model User {
   accounts      Account[]
   categories    Category[]
   transactions  Transaction[]
+  budgets       Budget[]
 
   @@map("users")
 }
@@ -67,6 +68,7 @@ model Category {
   kind         CategoryKind
   createdAt    DateTime      @default(now()) @map("created_at")
   transactions Transaction[]
+  budgets      Budget[]
 
   // Leading on userId so owner-scoped listing/lookups are index-satisfied
   // (see design.md "Database Schema" indexing strategy). Unique per
@@ -111,6 +113,31 @@ model Transaction {
   @@index([userId, categoryId])
   @@index([userId, accountId])
   @@map("transactions")
+}
+
+// Fixed monthly per-category spending limit (see design.md "Domain Model").
+// Actual-vs-limit is computed on read by summing `transactions` for
+// (userId, categoryId) within the calendar month matching `periodMonth` —
+// no cached actual column (see design.md "Balance/aggregate derivation").
+model Budget {
+  id          String   @id
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId  String   @map("category_id")
+  category    Category @relation(fields: [categoryId], references: [id])
+  // 'YYYY-MM' calendar month string, not user-configurable beyond that shape
+  // (see spec.md "Budgets Specification" — "period is not user-configurable").
+  periodMonth String   @map("period_month")
+  limitCents  BigInt   @map("limit_cents")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Unique per (userId, categoryId, periodMonth) enforces "Requirement:
+  // Monthly Budget Creation" (duplicate rejected) at the DB level as
+  // defense-in-depth, mirroring Category's @@unique([userId, name, kind])
+  // and the application-layer check in CreateBudgetUseCase.
+  @@unique([userId, categoryId, periodMonth])
+  @@index([userId])
+  @@map("budgets")
 }
 
 model RefreshToken {
