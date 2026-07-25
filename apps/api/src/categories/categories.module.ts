@@ -9,8 +9,8 @@ import { GetCategoryUseCase } from './application/get-category.use-case';
 import { ListCategoriesUseCase } from './application/list-categories.use-case';
 import { UpdateCategoryUseCase } from './application/update-category.use-case';
 import { CategoriesController } from './infrastructure/http/categories.controller';
-import { NoTransactionsYetAdapter } from './infrastructure/persistence/no-transactions-yet.adapter';
 import { PrismaCategoryRepository } from './infrastructure/persistence/prisma-category.repository';
+import { PrismaTransactionReferenceAdapter } from './infrastructure/persistence/prisma-transaction-reference.adapter';
 
 @Module({
   // AuthModule provides JwtAuthGuard (used on CategoriesController) and, by
@@ -28,7 +28,11 @@ import { PrismaCategoryRepository } from './infrastructure/persistence/prisma-ca
     UpdateCategoryUseCase,
     DeleteCategoryUseCase,
     { provide: CATEGORY_REPOSITORY, useClass: PrismaCategoryRepository },
-    { provide: TRANSACTION_REFERENCE, useClass: NoTransactionsYetAdapter },
+    { provide: TRANSACTION_REFERENCE, useClass: PrismaTransactionReferenceAdapter },
   ],
+  // Exported so TransactionsModule can inject CATEGORY_REPOSITORY for its
+  // own cross-owner reference checks (see design.md "Ownership scoping" —
+  // Phase 5 depends on Accounts+Categories).
+  exports: [CATEGORY_REPOSITORY],
 })
 export class CategoriesModule {}

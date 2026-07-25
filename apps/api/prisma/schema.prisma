@@ -4,7 +4,9 @@
 // each shipping its own migration alongside that capability's code (see
 // design.md "Migration / Rollout"). Phase 1 shipped the baseline
 // datasource/generator only; Phase 2 (Auth) added User + RefreshToken;
-// Phase 3 (Accounts) added Account; Phase 4 (Categories) adds Category.
+// Phase 3 (Accounts) added Account; Phase 4 (Categories) added Category;
+// Phase 5 (Transactions) adds Transaction, the ledger both Account balances
+// and Category delete-guards are derived from.
 //
 // Prisma models are infrastructure-only: the domain/application layers never
 // import `@prisma/client` directly (see design.md "Migrations / ORM").
@@ -26,6 +28,7 @@ model User {
   refreshTokens RefreshToken[]
   accounts      Account[]
   categories    Category[]
+  transactions  Transaction[]
 
   @@map("users")
 }
@@ -37,12 +40,13 @@ enum AccountType {
 }
 
 model Account {
-  id        String      @id
-  userId    String      @map("user_id")
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name      String
-  type      AccountType
-  createdAt DateTime    @default(now()) @map("created_at")
+  id           String        @id
+  userId       String        @map("user_id")
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  type         AccountType
+  createdAt    DateTime      @default(now()) @map("created_at")
+  transactions Transaction[]
 
   // Leading on userId so owner-scoped listing/lookups are index-satisfied
   // (see design.md "Database Schema" indexing strategy).
@@ -56,12 +60,13 @@ enum CategoryKind {
 }
 
 model Category {
-  id        String       @id
-  userId    String       @map("user_id")
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name      String
-  kind      CategoryKind
-  createdAt DateTime     @default(now()) @map("created_at")
+  id           String        @id
+  userId       String        @map("user_id")
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  kind         CategoryKind
+  createdAt    DateTime      @default(now()) @map("created_at")
+  transactions Transaction[]
 
   // Leading on userId so owner-scoped listing/lookups are index-satisfied
   // (see design.md "Database Schema" indexing strategy). Unique per
@@ -71,6 +76,41 @@ model Category {
   @@unique([userId, name, kind])
   @@index([userId])
   @@map("categories")
+}
+
+enum TransactionType {
+  income
+  expense
+}
+
+model Transaction {
+  id          String          @id
+  userId      String          @map("user_id")
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId   String          @map("account_id")
+  account     Account         @relation(fields: [accountId], references: [id])
+  categoryId  String          @map("category_id")
+  category    Category        @relation(fields: [categoryId], references: [id])
+  type        TransactionType
+  // Signed convention: `type` determines the sign when deriving balances
+  // (income adds, expense subtracts) — amountCents itself is always stored
+  // positive (see Transaction.create()'s "amount must be positive" invariant
+  // and design.md "Money representation": BIGINT cents end-to-end).
+  amountCents BigInt          @map("amount_cents")
+  occurredOn  DateTime        @map("occurred_on")
+  note        String?
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  // Leading on userId so every owner-scoped query is index-satisfied (see
+  // design.md "Database Schema" indexing strategy): listing + time-series
+  // reporting, spend-by-category aggregation, and per-account balance SUM,
+  // respectively. Account/Category deletion guards (existsForAccount /
+  // existsForCategory) also benefit from the (userId, accountId) /
+  // (userId, categoryId) indexes.
+  @@index([userId, occurredOn])
+  @@index([userId, categoryId])
+  @@index([userId, accountId])
+  @@map("transactions")
 }
 
 model RefreshToken {

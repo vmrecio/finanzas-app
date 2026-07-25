@@ -40,9 +40,12 @@ describe('Accounts HTTP (integration)', () => {
   });
 
   // Full-table cleanup is safe here only because integration specs run
-  // serially (`jest --runInBand`, see apps/api/package.json).
+  // serially (`jest --runInBand`, see apps/api/package.json). Transactions
+  // must be cleared before accounts/categories/users due to FK constraints.
   afterEach(async () => {
+    await prisma.transaction.deleteMany();
     await prisma.account.deleteMany();
+    await prisma.category.deleteMany();
     await prisma.refreshToken.deleteMany();
     await prisma.user.deleteMany();
   });
@@ -155,6 +158,54 @@ describe('Accounts HTTP (integration)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.name).toBe('My Account');
+      expect(response.body.balanceCents).toBe(0);
+    });
+
+    it('reflects the ledger-derived balance from real transactions (income minus expense)', async () => {
+      const owner = await registerAndLogin(app, 'balance-owner@example.com');
+      const createResponse = await request(app.getHttpServer())
+        .post('/accounts')
+        .set('Authorization', `Bearer ${owner.accessToken}`)
+        .send({ name: 'Balance Account', type: 'bank' });
+      const accountId = createResponse.body.id as string;
+      const ownerId = (await prisma.user.findUnique({ where: { email: 'balance-owner@example.com' } }))!.id;
+      const incomeCategoryId = 'balance-income-category';
+      const expenseCategoryId = 'balance-expense-category';
+      await prisma.category.createMany({
+        data: [
+          { id: incomeCategoryId, userId: ownerId, name: 'Salary', kind: 'income' },
+          { id: expenseCategoryId, userId: ownerId, name: 'Groceries', kind: 'expense' },
+        ],
+      });
+      await prisma.transaction.createMany({
+        data: [
+          {
+            id: 'balance-income-tx',
+            userId: ownerId,
+            accountId,
+            categoryId: incomeCategoryId,
+            type: 'income',
+            amountCents: 10000n,
+            occurredOn: new Date('2026-07-01T00:00:00.000Z'),
+          },
+          {
+            id: 'balance-expense-tx',
+            userId: ownerId,
+            accountId,
+            categoryId: expenseCategoryId,
+            type: 'expense',
+            amountCents: 3000n,
+            occurredOn: new Date('2026-07-02T00:00:00.000Z'),
+          },
+        ],
+      });
+
+      const response = await request(app.getHttpServer())
+        .get(`/accounts/${accountId}`)
+        .set('Authorization', `Bearer ${owner.accessToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.balanceCents).toBe(7000);
     });
 
     it('returns 404 for an id that does not exist at all', async () => {
@@ -205,6 +256,37 @@ describe('Accounts HTTP (integration)', () => {
         .get(`/accounts/${accountId}`)
         .set('Authorization', `Bearer ${owner.accessToken}`);
       expect(getResponse.status).toBe(404);
+    });
+
+    it('blocks deletion and preserves the account when it has an existing transaction', async () => {
+      const owner = await registerAndLogin(app, 'delete-blocked-owner@example.com');
+      const createResponse = await request(app.getHttpServer())
+        .post('/accounts')
+        .set('Authorization', `Bearer ${owner.accessToken}`)
+        .send({ name: 'In Use', type: 'bank' });
+      const accountId = createResponse.body.id as string;
+      const ownerId = (await prisma.user.findUnique({ where: { email: 'delete-blocked-owner@example.com' } }))!
+        .id;
+      const categoryId = 'delete-blocked-category';
+      await prisma.category.create({ data: { id: categoryId, userId: ownerId, name: 'Groceries', kind: 'expense' } });
+      await prisma.transaction.create({
+        data: {
+          id: 'delete-blocked-transaction',
+          userId: ownerId,
+          accountId,
+          categoryId,
+          type: 'expense',
+          amountCents: 500n,
+          occurredOn: new Date('2026-07-01T00:00:00.000Z'),
+        },
+      });
+
+      const deleteResponse = await request(app.getHttpServer())
+        .delete(`/accounts/${accountId}`)
+        .set('Authorization', `Bearer ${owner.accessToken}`);
+
+      expect(deleteResponse.status).toBe(409);
+      expect(await prisma.account.findUnique({ where: { id: accountId } })).not.toBeNull();
     });
   });
 });
