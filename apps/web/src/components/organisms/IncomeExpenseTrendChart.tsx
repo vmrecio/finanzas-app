@@ -3,6 +3,7 @@
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { IncomeExpenseTrendEntry } from '../../lib/api-client';
 import { MoneyDisplay } from '../atoms/MoneyDisplay';
+import { formatCents } from '../atoms/money';
 
 export interface IncomeExpenseTrendChartProps {
   data: IncomeExpenseTrendEntry[];
@@ -25,8 +26,8 @@ export function IncomeExpenseTrendChart({ data }: IncomeExpenseTrendChartProps) 
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="period" />
-            <YAxis />
-            <Tooltip />
+            <YAxis tickFormatter={formatCents} />
+            <Tooltip formatter={(value) => formatCents(Number(value))} />
             <Line type="monotone" dataKey="incomeCents" stroke="#2e7d32" name="Income" />
             <Line type="monotone" dataKey="expenseCents" stroke="#c62828" name="Expense" />
           </LineChart>
