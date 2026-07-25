@@ -3,10 +3,11 @@ import { AccountsModule } from './accounts/accounts.module';
 import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { CategoriesModule } from './categories/categories.module';
+import { ReportingModule } from './reporting/reporting.module';
 import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
-  imports: [AuthModule, AccountsModule, CategoriesModule, TransactionsModule],
+  imports: [AuthModule, AccountsModule, CategoriesModule, TransactionsModule, ReportingModule],
   controllers: [AppController],
 })
 export class AppModule {}
