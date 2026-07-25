@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { clearAccessToken, me } from '../lib/api-client';
+import { clearAccessToken, logout, me } from '../lib/api-client';
 
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -9,7 +9,7 @@ export interface AuthContextValue {
   status: AuthStatus;
   userId: string | null;
   setAuthenticated: (userId: string) => void;
-  signOut: () => void;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -55,10 +55,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setStatus('authenticated');
   }, []);
 
-  const signOut = useCallback(() => {
-    clearAccessToken();
-    setUserId(null);
-    setStatus('unauthenticated');
+  const signOut = useCallback(async () => {
+    try {
+      // Invalidates the server-side httpOnly refresh cookie. `logout()`
+      // already clears the in-memory access token itself (even on failure),
+      // but a network failure here must never prevent the user from leaving
+      // the authenticated UI locally, so local state is always cleared below
+      // regardless of the outcome.
+      await logout();
+    } catch {
+      clearAccessToken();
+    } finally {
+      setUserId(null);
+      setStatus('unauthenticated');
+    }
   }, []);
 
   return (
