@@ -93,3 +93,52 @@ export interface LoginResult {
 export interface MeResult {
   id: string;
 }
+
+export interface SpendByCategoryEntry {
+  categoryId: string;
+  categoryName: string;
+  totalCents: number;
+}
+
+export interface IncomeExpenseTrendEntry {
+  period: string;
+  incomeCents: number;
+  expenseCents: number;
+}
+
+export interface DashboardSummaryResult {
+  totalBalanceCents: number;
+  periodIncomeCents: number;
+  periodExpenseCents: number;
+}
+
+export interface ReportPeriodQuery {
+  fromDate: string;
+  toDate: string;
+}
+
+export interface DashboardSummaryQuery {
+  fromDate?: string;
+  toDate?: string;
+}
+
+export interface BudgetDto {
+  id: string;
+  categoryId: string;
+  periodMonth: string;
+  limitCents: number;
+  actualCents: number;
+  exceeded: boolean;
+}
+
+export interface CreateBudgetInput {
+  categoryId: string;
+  periodMonth: string;
+  limitCents: number;
+}
+
+export interface UpdateBudgetInput {
+  categoryId?: string;
+  periodMonth?: string;
+  limitCents?: number;
+}
