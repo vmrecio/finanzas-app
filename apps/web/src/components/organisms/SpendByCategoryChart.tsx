@@ -3,6 +3,7 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { SpendByCategoryEntry } from '../../lib/api-client';
 import { MoneyDisplay } from '../atoms/MoneyDisplay';
+import { formatCents } from '../atoms/money';
 
 export interface SpendByCategoryChartProps {
   data: SpendByCategoryEntry[];
@@ -27,8 +28,8 @@ export function SpendByCategoryChart({ data }: SpendByCategoryChartProps) {
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="categoryName" />
-            <YAxis />
-            <Tooltip />
+            <YAxis tickFormatter={formatCents} />
+            <Tooltip formatter={(value) => formatCents(Number(value))} />
             <Bar dataKey="totalCents" fill="#8884d8" name="Total spent" />
           </BarChart>
         </ResponsiveContainer>
