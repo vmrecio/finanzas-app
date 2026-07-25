@@ -30,7 +30,7 @@ export function LoginForm({ onSubmit, error, pending }: LoginFormProps) {
   const displayedError = validationError ?? error;
 
   return (
-    <form aria-label="Login" onSubmit={handleSubmit}>
+    <form aria-label="Login" onSubmit={handleSubmit} className="flex flex-col gap-6">
       <FormField label="Email" name="email" type="email" value={email} onChange={setEmail} />
       <FormField
         label="Password"
@@ -40,7 +40,7 @@ export function LoginForm({ onSubmit, error, pending }: LoginFormProps) {
         onChange={setPassword}
       />
       {displayedError && <ErrorMessage message={displayedError} />}
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" disabled={pending} className="w-full">
         {pending ? 'Logging in…' : 'Log in'}
       </Button>
     </form>
