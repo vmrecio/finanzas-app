@@ -15,6 +15,7 @@ import {
 import type { Request } from 'express';
 import {
   CategoryAlreadyExistsError,
+  CategoryHasBudgetsError,
   CategoryHasTransactionsError,
   CategoryNotFoundError,
 } from '../../domain/errors';
@@ -117,6 +118,9 @@ export class CategoriesController {
       return new ConflictException(error.message);
     }
     if (error instanceof CategoryHasTransactionsError) {
+      return new ConflictException(error.message);
+    }
+    if (error instanceof CategoryHasBudgetsError) {
       return new ConflictException(error.message);
     }
     return error as Error;

@@ -43,6 +43,7 @@ describe('Categories HTTP (integration)', () => {
   // serially (`jest --runInBand`, see apps/api/package.json). Transactions
   // must be cleared before accounts/categories/users due to FK constraints.
   afterEach(async () => {
+    await prisma.budget.deleteMany();
     await prisma.transaction.deleteMany();
     await prisma.account.deleteMany();
     await prisma.category.deleteMany();
@@ -245,6 +246,40 @@ describe('Categories HTTP (integration)', () => {
           type: 'expense',
           amountCents: 500n,
           occurredOn: new Date('2026-07-01T00:00:00.000Z'),
+        },
+      });
+
+      const deleteResponse = await request(app.getHttpServer())
+        .delete(`/categories/${categoryId}`)
+        .set('Authorization', `Bearer ${owner.accessToken}`);
+
+      expect(deleteResponse.status).toBe(409);
+      expect(await prisma.category.findUnique({ where: { id: categoryId } })).not.toBeNull();
+    });
+
+    // Regression test for GitHub issue #17: a category with a budget but
+    // zero transactions previously passed the transaction-only guard and
+    // then hit the budgets.category_id ON DELETE RESTRICT FK directly,
+    // surfacing as a raw 500 instead of a clean 409.
+    it('blocks deletion with 409 (not 500) and preserves the category when it is referenced by a budget but has zero transactions', async () => {
+      const owner = await registerAndLogin(app, 'delete-blocked-by-budget-owner@example.com');
+      const createResponse = await request(app.getHttpServer())
+        .post('/categories')
+        .set('Authorization', `Bearer ${owner.accessToken}`)
+        .send({ name: 'Budgeted', kind: 'expense' });
+      const categoryId = createResponse.body.id as string;
+      const ownerId = (
+        await prisma.user.findUnique({
+          where: { email: 'delete-blocked-by-budget-owner@example.com' },
+        })
+      )!.id;
+      await prisma.budget.create({
+        data: {
+          id: 'delete-blocked-budget',
+          userId: ownerId,
+          categoryId,
+          periodMonth: '2026-07',
+          limitCents: 10_000n,
         },
       });
 
