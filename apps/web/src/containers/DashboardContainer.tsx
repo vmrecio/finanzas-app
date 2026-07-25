@@ -75,15 +75,17 @@ export function DashboardContainer() {
   }, []);
 
   if (loading) {
-    return <p>Loading…</p>;
+    return <p className="text-body-sm text-on-surface-variant">Loading…</p>;
   }
 
   return (
-    <section>
+    <section className="flex flex-col gap-6">
       {error && <ErrorMessage message={error} />}
       {summary && <SummaryStats summary={summary} />}
-      <SpendByCategoryChart data={spendByCategory} />
-      <IncomeExpenseTrendChart data={trend} />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <SpendByCategoryChart data={spendByCategory} />
+        <IncomeExpenseTrendChart data={trend} />
+      </div>
     </section>
   );
 }

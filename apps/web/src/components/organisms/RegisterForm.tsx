@@ -36,7 +36,7 @@ export function RegisterForm({ onSubmit, error, pending }: RegisterFormProps) {
   const displayedError = validationError ?? error;
 
   return (
-    <form aria-label="Register" onSubmit={handleSubmit}>
+    <form aria-label="Register" onSubmit={handleSubmit} className="flex flex-col gap-6">
       <FormField label="Email" name="email" type="email" value={email} onChange={setEmail} />
       <FormField
         label="Password"
@@ -46,7 +46,7 @@ export function RegisterForm({ onSubmit, error, pending }: RegisterFormProps) {
         onChange={setPassword}
       />
       {displayedError && <ErrorMessage message={displayedError} />}
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" disabled={pending} className="w-full">
         {pending ? 'Creating account…' : 'Create account'}
       </Button>
     </form>

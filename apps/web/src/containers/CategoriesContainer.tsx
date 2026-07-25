@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { Card } from '../components/atoms/Card';
 import { ErrorMessage } from '../components/atoms/ErrorMessage';
 import { CategoryForm, type CategoryFormValues } from '../components/organisms/CategoryForm';
 import { CategoryList } from '../components/organisms/CategoryList';
@@ -94,20 +95,27 @@ export function CategoriesContainer() {
   }
 
   return (
-    <section>
-      <CategoryForm
-        key={editing?.id ?? 'create'}
-        initialValues={editing ?? undefined}
-        onSubmit={handleSubmit}
-        onCancel={editing ? () => setEditing(null) : undefined}
-        pending={pending}
-        error={formError}
-      />
+    <section className="flex flex-col gap-6">
+      <Card className="p-6">
+        <h2 className="mb-4 border-b border-outline-variant pb-4 text-headline-sm text-on-surface">
+          {editing ? 'Edit category' : 'Add category'}
+        </h2>
+        <CategoryForm
+          key={editing?.id ?? 'create'}
+          initialValues={editing ?? undefined}
+          onSubmit={handleSubmit}
+          onCancel={editing ? () => setEditing(null) : undefined}
+          pending={pending}
+          error={formError}
+        />
+      </Card>
       {listError && <ErrorMessage message={listError} />}
       {loading ? (
-        <p>Loading…</p>
+        <p className="text-body-sm text-on-surface-variant">Loading…</p>
       ) : (
-        <CategoryList categories={categories} onEdit={setEditing} onDelete={handleDelete} />
+        <Card className="overflow-hidden">
+          <CategoryList categories={categories} onEdit={setEditing} onDelete={handleDelete} />
+        </Card>
       )}
     </section>
   );

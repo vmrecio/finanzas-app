@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { Card } from '../components/atoms/Card';
 import { ErrorMessage } from '../components/atoms/ErrorMessage';
 import type { BudgetFormInitialValues, BudgetFormValues } from '../components/organisms/BudgetForm';
 import { BudgetForm } from '../components/organisms/BudgetForm';
@@ -108,30 +109,37 @@ export function BudgetsContainer() {
   }
 
   return (
-    <section>
+    <section className="flex flex-col gap-6">
       {listError && <ErrorMessage message={listError} />}
       {loading ? (
-        <p>Loading…</p>
+        <p className="text-body-sm text-on-surface-variant">Loading…</p>
       ) : (
         <>
           {/* Gated behind `loading` like TransactionForm — the category
               `<select>` defaults from the first expense category only once,
               at first render, so it must not mount before categories exist. */}
-          <BudgetForm
-            key={editing?.id ?? 'create'}
-            categories={categories}
-            initialValues={editing ? toInitialValues(editing) : undefined}
-            onSubmit={handleSubmit}
-            onCancel={editing ? () => setEditing(null) : undefined}
-            pending={pending}
-            error={formError}
-          />
-          <BudgetList
-            budgets={budgets}
-            categories={categories}
-            onEdit={setEditing}
-            onDelete={handleDelete}
-          />
+          <Card className="p-6">
+            <h2 className="mb-4 border-b border-outline-variant pb-4 text-headline-sm text-on-surface">
+              {editing ? 'Edit budget' : 'Add budget'}
+            </h2>
+            <BudgetForm
+              key={editing?.id ?? 'create'}
+              categories={categories}
+              initialValues={editing ? toInitialValues(editing) : undefined}
+              onSubmit={handleSubmit}
+              onCancel={editing ? () => setEditing(null) : undefined}
+              pending={pending}
+              error={formError}
+            />
+          </Card>
+          <Card className="overflow-hidden">
+            <BudgetList
+              budgets={budgets}
+              categories={categories}
+              onEdit={setEditing}
+              onDelete={handleDelete}
+            />
+          </Card>
         </>
       )}
     </section>

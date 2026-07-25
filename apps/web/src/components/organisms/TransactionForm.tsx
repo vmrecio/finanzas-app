@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import type { AccountDto, CategoryDto, TransactionType } from '../../lib/api-client';
 import { Button } from '../atoms/Button';
 import { ErrorMessage } from '../atoms/ErrorMessage';
+import { INPUT_CLASSES } from '../atoms/Input';
 import { parseEurosToCents } from '../atoms/money';
 import { FormField } from '../molecules/FormField';
 
@@ -83,67 +84,80 @@ export function TransactionForm({
   const displayedError = validationError ?? error;
 
   return (
-    <form aria-label={isEditing ? 'Edit transaction' : 'Create transaction'} onSubmit={handleSubmit}>
-      <label>
-        <span>Account</span>
-        <select
-          name="transaction-account"
-          value={accountId}
-          onChange={(event) => setAccountId(event.target.value)}
-        >
-          {accounts.map((account) => (
-            <option key={account.id} value={account.id}>
-              {account.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        <span>Category</span>
-        <select
-          name="transaction-category"
-          value={categoryId}
-          onChange={(event) => setCategoryId(event.target.value)}
-        >
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        <span>Type</span>
-        <select
-          name="transaction-type"
-          value={type}
-          onChange={(event) => setType(event.target.value as TransactionType)}
-        >
-          {TRANSACTION_TYPES.map((transactionType) => (
-            <option key={transactionType} value={transactionType}>
-              {transactionType}
-            </option>
-          ))}
-        </select>
-      </label>
-      <FormField label="Amount (EUR)" name="transaction-amount" value={amount} onChange={setAmount} />
-      <FormField
-        label="Date"
-        name="transaction-date"
-        type="date"
-        value={occurredOn}
-        onChange={setOccurredOn}
-      />
-      <FormField label="Note" name="transaction-note" value={note} onChange={setNote} />
+    <form
+      aria-label={isEditing ? 'Edit transaction' : 'Create transaction'}
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-4"
+    >
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-body-sm font-bold text-on-surface">Account</span>
+          <select
+            name="transaction-account"
+            value={accountId}
+            onChange={(event) => setAccountId(event.target.value)}
+            className={INPUT_CLASSES}
+          >
+            {accounts.map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-body-sm font-bold text-on-surface">Category</span>
+          <select
+            name="transaction-category"
+            value={categoryId}
+            onChange={(event) => setCategoryId(event.target.value)}
+            className={INPUT_CLASSES}
+          >
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-body-sm font-bold text-on-surface">Type</span>
+          <select
+            name="transaction-type"
+            value={type}
+            onChange={(event) => setType(event.target.value as TransactionType)}
+            className={INPUT_CLASSES}
+          >
+            {TRANSACTION_TYPES.map((transactionType) => (
+              <option key={transactionType} value={transactionType}>
+                {transactionType}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <FormField label="Amount (EUR)" name="transaction-amount" value={amount} onChange={setAmount} />
+        <FormField
+          label="Date"
+          name="transaction-date"
+          type="date"
+          value={occurredOn}
+          onChange={setOccurredOn}
+        />
+        <FormField label="Note" name="transaction-note" value={note} onChange={setNote} />
+      </div>
       {displayedError && <ErrorMessage message={displayedError} />}
-      <Button type="submit" disabled={pending}>
-        {isEditing ? 'Save' : 'Create'}
-      </Button>
-      {onCancel && (
-        <Button type="button" onClick={onCancel}>
-          Cancel
+      <div className="flex gap-3">
+        <Button type="submit" disabled={pending}>
+          {isEditing ? 'Save' : 'Create'}
         </Button>
-      )}
+        {onCancel && (
+          <Button type="button" variant="secondary" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
+      </div>
     </form>
   );
 }
