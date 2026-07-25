@@ -21,3 +21,15 @@ export class CategoryHasTransactionsError extends Error {
     this.name = 'CategoryHasTransactionsError';
   }
 }
+
+// Distinct from CategoryHasTransactionsError so the client can tell *why*
+// deletion was blocked (see GitHub issue #17 — `budgets.category_id` has an
+// ON DELETE RESTRICT FK; without this guard the delete falls through to a
+// raw, unhandled Postgres constraint violation). Both errors map to the
+// same 409 Conflict at the HTTP boundary (see CategoriesController.mapError).
+export class CategoryHasBudgetsError extends Error {
+  constructor() {
+    super('Cannot delete a category that is referenced by existing budgets');
+    this.name = 'CategoryHasBudgetsError';
+  }
+}
