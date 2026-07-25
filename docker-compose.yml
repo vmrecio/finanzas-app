@@ -27,6 +27,7 @@ services:
     environment:
       DATABASE_URL: 'postgresql://finanzas:finanzas@postgres:5432/finanzas?schema=public'
       PORT: '3001'
+      WEB_ORIGIN: 'http://localhost:3000'
     ports:
       - '3001:3001'
     volumes:
