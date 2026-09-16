@@ -17,8 +17,8 @@ export function FormField({ label, name, value, onChange, type = 'text', require
   }
 
   return (
-    <label>
-      <span>{label}</span>
+    <label className="flex flex-col gap-1.5">
+      <span className="text-body-sm font-bold text-on-surface">{label}</span>
       <Input id={name} name={name} type={type} value={value} onChange={handleChange} required={required} />
     </label>
   );

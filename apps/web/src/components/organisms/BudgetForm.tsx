@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import type { CategoryDto } from '../../lib/api-client';
 import { Button } from '../atoms/Button';
 import { ErrorMessage } from '../atoms/ErrorMessage';
+import { INPUT_CLASSES } from '../atoms/Input';
 import { parseEurosToCents } from '../atoms/money';
 import { FormField } from '../molecules/FormField';
 
@@ -70,38 +71,47 @@ export function BudgetForm({
   const displayedError = validationError ?? error;
 
   return (
-    <form aria-label={isEditing ? 'Edit budget' : 'Create budget'} onSubmit={handleSubmit}>
-      <label>
-        <span>Category</span>
-        <select
-          name="budget-category"
-          value={categoryId}
-          onChange={(event) => setCategoryId(event.target.value)}
-        >
-          {expenseCategories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <FormField
-        label="Month"
-        name="budget-month"
-        type="month"
-        value={periodMonth}
-        onChange={setPeriodMonth}
-      />
-      <FormField label="Limit (EUR)" name="budget-limit" value={limit} onChange={setLimit} />
+    <form
+      aria-label={isEditing ? 'Edit budget' : 'Create budget'}
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-4"
+    >
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-body-sm font-bold text-on-surface">Category</span>
+          <select
+            name="budget-category"
+            value={categoryId}
+            onChange={(event) => setCategoryId(event.target.value)}
+            className={INPUT_CLASSES}
+          >
+            {expenseCategories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <FormField
+          label="Month"
+          name="budget-month"
+          type="month"
+          value={periodMonth}
+          onChange={setPeriodMonth}
+        />
+        <FormField label="Limit (EUR)" name="budget-limit" value={limit} onChange={setLimit} />
+      </div>
       {displayedError && <ErrorMessage message={displayedError} />}
-      <Button type="submit" disabled={pending}>
-        {isEditing ? 'Save' : 'Create'}
-      </Button>
-      {onCancel && (
-        <Button type="button" onClick={onCancel}>
-          Cancel
+      <div className="flex gap-3">
+        <Button type="submit" disabled={pending}>
+          {isEditing ? 'Save' : 'Create'}
         </Button>
-      )}
+        {onCancel && (
+          <Button type="button" variant="secondary" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
+      </div>
     </form>
   );
 }

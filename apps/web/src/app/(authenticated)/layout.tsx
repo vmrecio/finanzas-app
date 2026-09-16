@@ -11,7 +11,7 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
   return (
     <RequireAuth>
       <AuthenticatedNav />
-      {children}
+      <div className="min-h-screen w-full bg-background md:pl-[280px]">{children}</div>
     </RequireAuth>
   );
 }
